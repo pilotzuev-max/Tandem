@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Тандем">
+<meta name="theme-color" content="#0f1117">
+<title>Тандем — расписание</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #181c27;
+  --bg3: #1f2535;
+  --bg4: #252d3f;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f2f8;
+  --text2: #8b93aa;
+  --text3: #555e75;
+  --accent: #4f8ef7;
+  --accent2: #2d6ee0;
+  --accent-glow: rgba(79,142,247,0.18);
+  --green: #3dd68c;
+  --green-bg: rgba(61,214,140,0.12);
+  --amber: #f5a623;
+  --amber-bg: rgba(245,166,35,0.12);
+  --red: #f05252;
+  --red-bg: rgba(240,82,82,0.12);
+  --gray-bg: rgba(255,255,255,0.06);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font-head: 'Unbounded', sans-serif;
+  --font-body: 'Golos Text', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; overflow: hidden; }
+input, select, textarea, button { font-family: var(--font-body); }
+
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; overflow: hidden; }
+
+/* SCREENS */
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+.screen.active { transform: translateX(0); }
+.screen.back { transform: translateX(-30%); }
+
+/* LOGIN */
+#s-login { background: var(--bg); justify-content: flex-end; padding-bottom: env(safe-area-inset-bottom, 24px); }
+.login-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem 1rem; gap: 12px; }
+.login-icon { font-size: 56px; margin-bottom: 8px; filter: drop-shadow(0 0 24px rgba(79,142,247,0.4)); }
+.login-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.login-sub { font-size: 14px; color: var(--text2); }
+.user-list { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.user-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--radius); padding: 14px 16px;
+  cursor: pointer; color: var(--text); text-align: left;
+  transition: background 0.15s, transform 0.1s;
+}
+.user-btn:active { background: var(--bg3); transform: scale(0.98); }
+.avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.av-admin { background: linear-gradient(135deg, #1a3a6e, #2d5aa8); color: #7ab3f5; }
+.av-p1   { background: linear-gradient(135deg, #1a4a2e, #2d8a52); color: #6ddba0; }
+.av-p2   { background: linear-gradient(135deg, #4a2a1a, #a05020); color: #f5b06d; }
+.user-btn-label { font-size: 15px; font-weight: 600; }
+.user-btn-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.chevron { margin-left: auto; color: var(--text3); font-size: 18px; }
+
+/* PIN */
+#s-pin { background: var(--bg); justify-content: center; align-items: center; gap: 0; }
+.pin-wrap { width: 100%; padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.pin-user-row { display: flex; align-items: center; gap: 10px; }
+.pin-dots { display: flex; gap: 14px; }
+.pin-dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; transition: background 0.15s, border-color 0.15s; }
+.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+.pin-dot.error { background: var(--red); border-color: var(--red); }
+.pin-error { font-size: 13px; color: var(--red); min-height: 18px; }
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 300px; }
+.num-btn {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 17px 8px;
+  font-size: 20px; font-weight: 600; color: var(--text);
+  cursor: pointer; text-align: center; transition: background 0.1s, transform 0.1s;
+  font-family: var(--font-head);
+}
+.num-btn:active { background: var(--bg4); transform: scale(0.94); }
+.num-btn.secondary { font-size: 14px; font-weight: 400; color: var(--text2); font-family: var(--font-body); }
+
+/* TOP BAR */
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg); flex-shrink: 0; z-index: 10;
+}
+.bar-user { display: flex; align-items: center; gap: 10px; }
+.bar-name { font-size: 15px; font-weight: 600; }
+.icon-btn { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; display: flex; align-items: center; transition: color 0.15s; }
+.icon-btn:active { color: var(--text); }
+.logout-btn { background: var(--bg3); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; color: var(--text2); font-size: 13px; cursor: pointer; }
+.logout-btn:active { background: var(--bg4); }
+
+/* MAIN */
+#s-main { background: var(--bg); }
+.main-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+.date-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; }
+.date-center { text-align: center; }
+.date-label { font-family: var(--font-head); font-size: 16px; font-weight: 700; }
+.date-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.nav-arrow { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text2); transition: background 0.15s; }
+.nav-arrow:active { background: var(--bg3); }
+
+.shift-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--bg2); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+.shift-label { font-size: 13px; color: var(--text2); }
+.shift-time { font-size: 13px; font-weight: 600; color: var(--text); }
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle { position: relative; width: 44px; height: 26px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--bg4); border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+.toggle-slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+.slots-wrap { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.slot-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.slot-card.occupied { border-color: var(--border2); }
+.slot-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+.slot-time-block { min-width: 48px; }
+.slot-time { font-family: var(--font-head); font-size: 16px; font-weight: 700; }
+.slot-empty-label { flex: 1; font-size: 14px; color: var(--text3); }
+.add-btn { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; color: var(--text2); transition: background 0.15s; flex-shrink: 0; }
+.add-btn:active { background: var(--bg4); }
+.slot-info { flex: 1; min-width: 0; }
+.slot-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+.status-badge { padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.s-booked    { background: rgba(79,142,247,0.15); color: #7ab3f5; }
+.s-confirmed { background: var(--green-bg); color: var(--green); }
+.s-done      { background: var(--gray-bg); color: var(--text2); }
+.s-cancelled { background: var(--red-bg); color: var(--red); }
+
+/* FORM */
+#s-new, #s-edit { background: var(--bg); }
+.form-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.slot-label-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.slot-label-time { font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--accent); }
+.slot-label-date { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.field-group { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.field { padding: 10px 14px; border-bottom: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.field:last-child { border-bottom: none; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; }
+.field-row .field { border-right: 0.5px solid var(--border); }
+.field-row .field:last-child { border-right: none; }
+.field label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.field input, .field select, .field textarea {
+  background: none; border: none; color: var(--text); font-size: 15px; outline: none; width: 100%; padding: 2px 0;
+}
+.field textarea { resize: none; height: 64px; }
+.field select option { background: #1f2535; }
+.pilot-choice { display: flex; gap: 8px; }
+.pilot-opt { flex: 1; padding: 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; font-family: var(--font-body); }
+.pilot-opt.active { background: var(--accent); border-color: var(--accent); color: white; }
+.pilot-opt:active { transform: scale(0.97); }
+.form-actions { display: flex; gap: 10px; padding: 0 14px; margin-top: 4px; }
+.btn-cancel { flex: 1; padding: 13px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); font-size: 15px; cursor: pointer; transition: background 0.15s; font-family: var(--font-body); }
+.btn-cancel:active { background: var(--bg3); }
+.btn-save { flex: 2; padding: 13px; border-radius: var(--radius); border: none; background: var(--accent); color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; font-family: var(--font-body); }
+.btn-save:active { background: var(--accent2); transform: scale(0.98); }
+
+/* DETAIL */
+#s-detail { background: var(--bg); }
+.detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.detail-hero { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.detail-client { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.detail-time { font-size: 14px; color: var(--text2); }
+.detail-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-bottom: 0.5px solid var(--border); }
+.detail-row:last-child { border-bottom: none; }
+.detail-key { font-size: 13px; color: var(--text2); }
+.detail-val { font-size: 14px; font-weight: 600; text-align: right; }
+.detail-val.phone { color: var(--accent); }
+.status-section { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.status-title { font-size: 12px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.status-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.status-opt { padding: 8px 14px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg3); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: var(--font-body); }
+.status-opt:active { transform: scale(0.96); }
+.status-opt.active-booked    { background: rgba(79,142,247,0.2); border-color: var(--accent); color: #7ab3f5; }
+.status-opt.active-confirmed { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.status-opt.active-done      { background: var(--gray-bg); border-color: var(--border2); color: var(--text2); }
+.status-opt.active-cancelled { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+.delete-btn { background: var(--red-bg); border: 0.5px solid rgba(240,82,82,0.3); border-radius: var(--radius); padding: 13px; color: var(--red); font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; width: 100%; transition: background 0.15s; font-family: var(--font-body); }
+.delete-btn:active { background: rgba(240,82,82,0.2); }
+
+/* TOAST */
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 30px; padding: 10px 20px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; z-index: 100; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="login-hero">
+    <div class="login-icon">🪂</div>
+    <div class="login-title">Тандем</div>
+    <div class="login-sub">Выберите пользователя</div>
+  </div>
+  <div class="user-list">
+    <button class="user-btn" onclick="selectUser('admin')">
+      <div class="avatar av-admin">АД</div>
+      <div><div class="user-btn-label">Администратор</div><div class="user-btn-sub">Полный доступ</div></div>
+      <span class="chevron">›</span>
+    </button>
+    <button class="user-btn" onclick="selectUser('pilot1')">
+      <div class="avatar av-p1">П1</div>
+      <div><div class="user-btn-label">Пилот 1</div><div class="user-btn-sub">Все слоты, равные права</div></div>
+      <span class="chevron">›</span>
+    </button>
+    <button class="user-btn" onclick="selectUser('pilot2')">
+      <div class="avatar av-p2">П2</div>
+      <div><div class="user-btn-label">Пилот 2</div><div class="user-btn-sub">Все слоты, равные права</div></div>
+      <span class="chevron">›</span>
+    </button>
+  </div>
+</div>
+
+<!-- PIN -->
+<div id="s-pin" class="screen">
+  <div class="pin-wrap">
+    <div class="pin-user-row">
+      <div class="avatar" id="pin-av" style="width:36px;height:36px;font-size:11px"></div>
+      <span style="font-size:16px;font-weight:600" id="pin-name"></span>
+    </div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pin-err"></div>
+    <div class="numpad">
+      <button class="num-btn" onclick="pp('1')">1</button>
+      <button class="num-btn" onclick="pp('2')">2</button>
+      <button class="num-btn" onclick="pp('3')">3</button>
+      <button class="num-btn" onclick="pp('4')">4</button>
+      <button class="num-btn" onclick="pp('5')">5</button>
+      <button class="num-btn" onclick="pp('6')">6</button>
+      <button class="num-btn" onclick="pp('7')">7</button>
+      <button class="num-btn" onclick="pp('8')">8</button>
+      <button class="num-btn" onclick="pp('9')">9</button>
+      <button class="num-btn secondary" onclick="pp('back')">⌫</button>
+      <button class="num-btn" onclick="pp('0')">0</button>
+      <button class="num-btn secondary" onclick="goTo('s-login');curPin=''">Назад</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="s-main" class="screen">
+  <div class="top-bar">
+    <div class="bar-user">
+      <div class="avatar" id="main-av" style="width:32px;height:32px;font-size:11px"></div>
+      <span class="bar-name" id="main-name"></span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Выйти</button>
+  </div>
+  <div class="main-content">
+    <div class="date-bar">
+      <button class="nav-arrow" onclick="changeDate(-1)">‹</button>
+      <div class="date-center">
+        <div class="date-label" id="date-label"></div>
+        <div class="date-sub" id="date-sub"></div>
+      </div>
+      <button class="nav-arrow" onclick="changeDate(1)">›</button>
+    </div>
+    <div class="shift-bar">
+      <span class="shift-label">Смена</span>
+      <div class="toggle-wrap">
+        <span class="shift-time" id="shift-time-label">8–16</span>
+        <label class="toggle">
+          <input type="checkbox" id="shift-chk" onchange="onShiftToggle()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="shift-time" id="shift-time-label2" style="color:var(--text3)">7–17</span>
+      </div>
+    </div>
+    <div class="slots-wrap" id="slots-wrap"></div>
+  </div>
+</div>
+
+<!-- NEW BOOKING -->
+<div id="s-new" class="screen">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="goBack()">←</button>
+    <span style="font-family:var(--font-head);font-size:15px;font-weight:700">Новая запись</span>
+    <div style="width:32px"></div>
+  </div>
+  <div class="form-scroll">
+    <div class="slot-label-card">
+      <div class="slot-label-time" id="new-time"></div>
+      <div class="slot-label-date" id="new-date"></div>
+    </div>
+    <div class="field-group">
+      <div class="field">
+        <label>Имя клиента *</label>
+        <input id="f-name" type="text" placeholder="Иван Иванов" autocomplete="off" autocorrect="off">
+      </div>
+      <div class="field">
+        <label>Телефон *</label>
+        <input id="f-phone" type="tel" placeholder="+7 900 000 00 00">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Вес (кг)</label>
+          <input id="f-weight" type="number" placeholder="75" min="30" max="200">
+        </div>
+        <div class="field">
+          <label>Пилот</label>
+          <div class="pilot-choice" style="margin-top:4px">
+            <button class="pilot-opt active" id="fp-p1" onclick="selectPilot('pilot1')">П1</button>
+            <button class="pilot-opt" id="fp-p2" onclick="selectPilot('pilot2')">П2</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Комментарий</label>
+        <textarea id="f-comment" placeholder="Необязательно..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="goBack()">Отмена</button>
+      <button class="btn-save" onclick="saveBooking()">Записать ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="s-detail" class="screen">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="goBack()">←</button>
+    <span style="font-family:var(--font-head);font-size:15px;font-weight:700">Запись</span>
+    <button class="icon-btn" onclick="openEdit()" title="Редактировать">✎</button>
+  </div>
+  <div class="detail-scroll" id="detail-body"></div>
+</div>
+
+<!-- EDIT -->
+<div id="s-edit" class="screen">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="goTo('s-detail')">←</button>
+    <span style="font-family:var(--font-head);font-size:15px;font-weight:700">Редактировать</span>
+    <div style="width:32px"></div>
+  </div>
+  <div class="form-scroll">
+    <div class="field-group">
+      <div class="field">
+        <label>Имя клиента</label>
+        <input id="ef-name" type="text" autocorrect="off">
+      </div>
+      <div class="field">
+        <label>Телефон</label>
+        <input id="ef-phone" type="tel">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Вес (кг)</label>
+          <input id="ef-weight" type="number" min="30" max="200">
+        </div>
+        <div class="field">
+          <label>Пилот</label>
+          <div class="pilot-choice" style="margin-top:4px">
+            <button class="pilot-opt active" id="ep-p1" onclick="editSelectPilot('pilot1')">П1</button>
+            <button class="pilot-opt" id="ep-p2" onclick="editSelectPilot('pilot2')">П2</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Комментарий</label>
+        <textarea id="ef-comment" style="height:64px;resize:none"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="goTo('s-detail')">Отмена</button>
+      <button class="btn-save" onclick="saveEdit()">Сохранить ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PINS = { admin: '1234', pilot1: '1111', pilot2: '2222' };
+const NAMES = { admin: 'Администратор', pilot1: 'Пилот 1', pilot2: 'Пилот 2' };
+const AV_CLS = { admin: 'av-admin', pilot1: 'av-p1', pilot2: 'av-p2' };
+const AV_INIT = { admin: 'АД', pilot1: 'П1', pilot2: 'П2' };
+const BASE_SLOTS = ['08:00','10:00','12:00','14:00','16:00'];
+const SHIFT_SLOTS = ['07:00','09:00','11:00','13:00','15:00','17:00'];
+const STATUS_LABEL = { booked: 'Записан', confirmed: 'Подтверждён', done: 'Выполнен', cancelled: 'Отменён' };
+
+let currentUser = null, curPin = '', selectedUser = null;
+let currentDate = new Date(), bookings = {}, currentKey = null;
+let newPilot = 'pilot1', editPilot = 'pilot1';
+
+const screens = ['s-login','s-pin','s-main','s-new','s-detail','s-edit'];
+let prevScreen = 's-main';
+
+function goTo(id) {
+  const prev = document.querySelector('.screen.active');
+  if (prev) { prevScreen = prev.id; prev.classList.remove('active'); prev.classList.add('back'); setTimeout(()=>prev.classList.remove('back'), 300); }
+  document.getElementById(id).classList.add('active');
+}
+function goBack() { goTo('s-main'); renderSlots(); }
+
+function dk(d) { return d.toISOString().slice(0,10); }
+function fmtDate(d) {
+  const days = ['вс','пн','вт','ср','чт','пт','сб'];
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+}
+function isToday(d) { const t = new Date(); return d.toDateString() === t.toDateString(); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function loadData() {
+  try { const r = await window.storage.get('bk2'); if (r) bookings = JSON.parse(r.value); } catch(e) { bookings = {}; }
+}
+async function saveData() {
+  try { await window.storage.set('bk2', JSON.stringify(bookings)); } catch(e) {}
+}
+
+// LOGIN
+function selectUser(u) {
+  selectedUser = u; curPin = '';
+  updateDots();
+  document.getElementById('pin-err').textContent = '';
+  const av = document.getElementById('pin-av');
+  av.className = 'avatar ' + AV_CLS[u];
+  av.textContent = AV_INIT[u];
+  document.getElementById('pin-name').textContent = NAMES[u];
+  goTo('s-pin');
+}
+
+function pp(v) {
+  if (v === 'back') curPin = curPin.slice(0,-1);
+  else if (curPin.length < 4) curPin += v;
+  updateDots();
+  if (curPin.length === 4) checkPin();
+}
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd'+i);
+    d.classList.toggle('filled', i < curPin.length);
+    d.classList.remove('error');
+  }
+}
+function checkPin() {
+  if (curPin === PINS[selectedUser]) {
+    currentUser = selectedUser;
+    loadData().then(() => { enterMain(); });
+  } else {
+    for (let i = 0; i < 4; i++) document.getElementById('pd'+i).classList.add('error');
+    document.getElementById('pin-err').textContent = 'Неверный PIN';
+    curPin = '';
+    setTimeout(() => { updateDots(); document.getElementById('pin-err').textContent = ''; }, 700);
+  }
+}
+
+function enterMain() {
+  const av = document.getElementById('main-av');
+  av.className = 'avatar ' + AV_CLS[currentUser];
+  av.textContent = AV_INIT[currentUser];
+  document.getElementById('main-name').textContent = NAMES[currentUser];
+  renderSlots();
+  goTo('s-main');
+}
+
+function logout() { currentUser = null; curPin = ''; goTo('s-login'); }
+
+function changeDate(d) { currentDate = new Date(currentDate.getTime() + d * 86400000); renderSlots(); }
+
+function onShiftToggle() {
+  const shifted = document.getElementById('shift-chk').checked;
+  document.getElementById('shift-time-label').style.color = shifted ? 'var(--text3)' : 'var(--text)';
+  document.getElementById('shift-time-label2').style.color = shifted ? 'var(--text)' : 'var(--text3)';
+  renderSlots();
+}
+
+function getSlots() {
+  return document.getElementById('shift-chk').checked ? SHIFT_SLOTS : BASE_SLOTS;
+}
+
+function renderSlots() {
+  const key = dk(currentDate);
+  document.getElementById('date-label').textContent = isToday(currentDate) ? 'Сегодня' : fmtDate(currentDate);
+  document.getElementById('date-sub').textContent = isToday(currentDate) ? fmtDate(currentDate) : '';
+  const day = bookings[key] || {};
+  const slots = getSlots();
+  const wrap = document.getElementById('slots-wrap');
+  wrap.innerHTML = '';
+  slots.forEach(time => {
+    const b = day[time];
+    const card = document.createElement('div');
+    card.className = 'slot-card' + (b ? ' occupied' : '');
+    if (b) {
+      const sCls = {booked:'s-booked',confirmed:'s-confirmed',done:'s-done',cancelled:'s-cancelled'}[b.status] || 's-booked';
+      const pLabel = b.pilot === 'pilot1' ? 'Пилот 1' : 'Пилот 2';
+      card.innerHTML = `<div class="slot-row" style="cursor:pointer" onclick="openDetail('${key}_${time}')">
+        <div class="slot-time-block"><div class="slot-time">${time}</div></div>
+        <div class="slot-info">
+          <div class="slot-name">${esc(b.name)}</div>
+          <div class="slot-meta">${pLabel}${b.weight ? ' · ' + b.weight + ' кг' : ''}</div>
+        </div>
+        <span class="status-badge ${sCls}">${STATUS_LABEL[b.status]||'Записан'}</span>
+      </div>`;
+    } else {
+      card.innerHTML = `<div class="slot-row">
+        <div class="slot-time-block"><div class="slot-time" style="color:var(--text3)">${time}</div></div>
+        <div class="slot-empty-label">Свободно</div>
+        <button class="add-btn" onclick="openNew('${time}')" aria-label="Добавить">＋</button>
+      </div>`;
+    }
+    wrap.appendChild(card);
+  });
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// NEW
+function openNew(time) {
+  currentKey = dk(currentDate) + '_' + time;
+  document.getElementById('new-time').textContent = time;
+  document.getElementById('new-date').textContent = fmtDate(currentDate);
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-phone').value = '';
+  document.getElementById('f-weight').value = '';
+  document.getElementById('f-comment').value = '';
+  selectPilot('pilot1');
+  goTo('s-new');
+  setTimeout(() => document.getElementById('f-name').focus(), 350);
+}
+function selectPilot(p) {
+  newPilot = p;
+  document.getElementById('fp-p1').classList.toggle('active', p === 'pilot1');
+  document.getElementById('fp-p2').classList.toggle('active', p === 'pilot2');
+}
+function saveBooking() {
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  if (!name || !phone) { showToast('Введите имя и телефон'); return; }
+  const [d, t] = currentKey.split('_');
+  if (!bookings[d]) bookings[d] = {};
+  if (bookings[d][t]) { showToast('Слот уже занят!'); return; }
+  bookings[d][t] = {
+    name, phone,
+    weight: document.getElementById('f-weight').value || '',
+    pilot: newPilot,
+    comment: document.getElementById('f-comment').value.trim(),
+    status: 'booked',
+    created: Date.now()
+  };
+  saveData();
+  showToast('Запись создана');
+  goBack();
+}
+
+// DETAIL
+function openDetail(key) {
+  currentKey = key;
+  renderDetail();
+  goTo('s-detail');
+}
+function renderDetail() {
+  const [d, t] = currentKey.split('_');
+  const b = bookings[d] && bookings[d][t];
+  if (!b) return;
+  const dateObj = new Date(d + 'T12:00:00');
+  const pLabel = b.pilot === 'pilot1' ? 'Пилот 1' : 'Пилот 2';
+  let statusBtns = ['booked','confirmed','done','cancelled'].map(s => {
+    const ac = b.status === s ? 'active-' + s : '';
+    return `<button class="status-opt ${ac}" onclick="setStatus('${s}')">${STATUS_LABEL[s]}</button>`;
+  }).join('');
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-client">${esc(b.name)}</div>
+      <div class="detail-time">${fmtDate(dateObj)} · ${t} · ${pLabel}</div>
+    </div>
+    <div class="status-section">
+      <div class="status-title">Статус</div>
+      <div class="status-opts">${statusBtns}</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-row"><span class="detail-key">Телефон</span><span class="detail-val phone">${esc(b.phone)}</span></div>
+      ${b.weight ? `<div class="detail-row"><span class="detail-key">Вес</span><span class="detail-val">${b.weight} кг</span></div>` : ''}
+      ${b.comment ? `<div class="detail-row"><span class="detail-key">Комментарий</span><span class="detail-val" style="font-weight:400">${esc(b.comment)}</span></div>` : ''}
+    </div>
+    <button class="delete-btn" onclick="deleteBooking()">Удалить запись</button>
+  `;
+}
+function setStatus(s) {
+  const [d, t] = currentKey.split('_');
+  if (bookings[d] && bookings[d][t]) { bookings[d][t].status = s; saveData(); renderDetail(); }
+}
+function deleteBooking() {
+  if (!confirm('Удалить запись?')) return;
+  const [d, t] = currentKey.split('_');
+  if (bookings[d]) delete bookings[d][t];
+  saveData();
+  showToast('Запись удалена');
+  goBack();
+}
+
+// EDIT
+function openEdit() {
+  const [d, t] = currentKey.split('_');
+  const b = bookings[d] && bookings[d][t];
+  if (!b) return;
+  document.getElementById('ef-name').value = b.name;
+  document.getElementById('ef-phone').value = b.phone;
+  document.getElementById('ef-weight').value = b.weight || '';
+  document.getElementById('ef-comment').value = b.comment || '';
+  editSelectPilot(b.pilot);
+  goTo('s-edit');
+}
+function editSelectPilot(p) {
+  editPilot = p;
+  document.getElementById('ep-p1').classList.toggle('active', p === 'pilot1');
+  document.getElementById('ep-p2').classList.toggle('active', p === 'pilot2');
+}
+function saveEdit() {
+  const name = document.getElementById('ef-name').value.trim();
+  const phone = document.getElementById('ef-phone').value.trim();
+  if (!name || !phone) { showToast('Введите имя и телефон'); return; }
+  const [d, t] = currentKey.split('_');
+  const b = bookings[d][t];
+  b.name = name; b.phone = phone;
+  b.weight = document.getElementById('ef-weight').value || '';
+  b.pilot = editPilot;
+  b.comment = document.getElementById('ef-comment').value.trim();
+  saveData();
+  showToast('Изменения сохранены');
+  renderDetail();
+  goTo('s-detail');
+}
+
+loadData();
+</script>
+</body>
+</html>
