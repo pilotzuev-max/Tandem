@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Тандем">
+<meta name="theme-color" content="#0f1117">
+<title>Тандем — Гагра</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--bg2:#181c27;--bg3:#1f2535;--bg4:#2a3347;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.15);
+  --text:#f0f2f8;--text2:#8b93aa;--text3:#4a5268;
+  --accent:#4f8ef7;--accent2:#2d6ee0;
+  --green:#3dd68c;--gbg:rgba(61,214,140,0.13);
+  --red:#f05252;--rbg:rgba(240,82,82,0.13);
+  --amber:#f5a84a;--abg:rgba(245,168,74,0.13);
+  --r:12px;--rs:8px;
+  --fh:'Unbounded',sans-serif;--fb:'Golos Text',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fb);overflow:hidden}
+button,input,textarea,select{font-family:var(--fb);color:var(--text)}
+
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:640px;margin:0 auto;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;max-width:640px;margin:0 auto;display:flex;flex-direction:column;transform:translateX(110%);transition:transform .26s cubic-bezier(.4,0,.2,1);background:var(--bg)}
+.screen.active{transform:translateX(0)}
+.screen.prev{transform:translateX(-26%)}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:.5px solid var(--border);flex-shrink:0;background:var(--bg);z-index:20}
+.topbar-title{font-family:var(--fh);font-size:15px;font-weight:700}
+.ibtn{background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;padding:6px 10px;border-radius:var(--rs);font-weight:500;transition:all .15s}
+.ibtn:active{background:var(--bg3);color:var(--text)}
+.sbtn{background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--rs);padding:6px 12px;color:var(--text2);font-size:13px;cursor:pointer;font-weight:500}
+.sbtn:active{background:var(--bg4)}
+
+/* LOGIN */
+#s-login{justify-content:center;align-items:center}
+.login-box{width:100%;max-width:300px;padding:0 1.5rem;display:flex;flex-direction:column;align-items:center;gap:22px}
+.login-icon{font-size:52px;filter:drop-shadow(0 0 20px rgba(79,142,247,.4))}
+.login-title{font-family:var(--fh);font-size:22px;font-weight:700}
+.login-sub{font-size:13px;color:var(--text2)}
+.pdots{display:flex;gap:14px}
+.pd{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--border2);transition:all .15s}
+.pd.on{background:var(--accent);border-color:var(--accent)}
+.pd.er{background:var(--red);border-color:var(--red)}
+.perr{font-size:13px;color:var(--red);min-height:18px;text-align:center}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%}
+.nk{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:15px 8px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;text-align:center;transition:all .1s;font-family:var(--fh)}
+.nk:active{background:var(--bg4);transform:scale(.93)}
+.nk.dim{font-size:13px;font-weight:500;color:var(--text2);font-family:var(--fb)}
+
+/* WEEK NAV */
+.weeknav{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:.5px solid var(--border);flex-shrink:0}
+.wlabel-main{font-family:var(--fh);font-size:13px;font-weight:700;text-align:center}
+.wlabel-sub{font-size:11px;color:var(--text2);text-align:center;margin-top:2px}
+.narr{background:var(--bg2);border:.5px solid var(--border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:19px;color:var(--text2);flex-shrink:0}
+.narr:active{background:var(--bg3)}
+
+/* STATS BAR */
+.statsbar{display:flex;gap:0;border-bottom:.5px solid var(--border);flex-shrink:0;overflow-x:auto}
+.stat-item{flex:1;min-width:0;padding:7px 8px;text-align:center;border-right:.5px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-name{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-num{font-family:var(--fh);font-size:16px;font-weight:700;margin-top:1px}
+
+/* TABLE */
+.tscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.wtable{width:100%;border-collapse:collapse;table-layout:fixed}
+.wtable th{position:sticky;top:0;z-index:10;background:var(--bg3);border:.5px solid var(--border);padding:7px 4px;font-size:11px;font-weight:700;text-align:center}
+.th-r{width:42px;color:var(--text3);font-size:10px}
+.wtable td{border:.5px solid var(--border);padding:2px;vertical-align:top}
+
+/* DAY HEADER */
+.day-hdr-td{padding:0!important}
+.day-hdr{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg2)}
+.dh-name{font-family:var(--fh);font-size:11px;font-weight:700}
+.dh-date{font-size:11px;color:var(--text2)}
+.dh-today{background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:auto}
+.dh-closed{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:auto;cursor:pointer}
+
+/* ROUND LABEL */
+.td-round{text-align:center;padding:4px 2px!important;background:var(--bg)}
+.rl{font-family:var(--fh);font-size:9px;font-weight:700;color:var(--text3)}
+
+/* CELL */
+.cell{min-height:60px;border-radius:var(--rs);cursor:pointer;padding:4px 5px;display:flex;flex-direction:column;justify-content:center;transition:opacity .12s}
+.cell:active{opacity:.7}
+.cell-empty{align-items:center;justify-content:center;color:var(--text3)}
+.cell-empty .plus{font-size:20px}
+.cell-closed{align-items:center;justify-content:center;background:var(--rbg);border-radius:var(--rs)}
+.cell-closed-label{font-size:10px;color:var(--red);font-weight:600}
+.cell-filled{border-radius:var(--rs)}
+.cn{font-size:11px;font-weight:600;line-height:1.3;color:var(--text)}
+.cph{font-size:10px;margin-top:1px;font-weight:500}
+.ctr{font-size:9px;color:var(--text2);margin-top:1px}
+.crow{display:flex;align-items:center;gap:3px;margin-top:2px;flex-wrap:wrap}
+.cbadge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px}
+.csrc{font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px}
+.cb-b{background:rgba(79,142,247,.15);color:#7ab3f5}
+.cb-c{background:var(--gbg);color:var(--green)}
+.cb-d{background:rgba(255,255,255,.07);color:var(--text2)}
+.cb-x{background:var(--rbg);color:var(--red)}
+.src-own{background:var(--gbg);color:var(--green)}
+.src-agent{background:var(--abg);color:var(--amber)}
+
+/* PILOT COLORS — dynamic via JS */
+
+/* FORM */
+.fscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.fhero{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.fh-round{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
+.fh-date{font-size:13px;color:var(--text2)}
+.fh-pilot{font-size:13px;font-weight:600;margin-top:5px}
+.fgrp{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.fld{padding:10px 14px;border-bottom:.5px solid var(--border);display:flex;flex-direction:column;gap:3px}
+.fld:last-child{border-bottom:none}
+.fld label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.fld input,.fld textarea{background:none;border:none;color:var(--text);font-size:15px;outline:none;width:100%;padding:2px 0}
+.fld textarea{resize:none;height:58px}
+.seg{display:flex;gap:6px;flex-wrap:wrap;padding-top:3px}
+.sopt{padding:6px 12px;border-radius:20px;border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.sopt:active{transform:scale(.95)}
+.sopt.a-b{background:rgba(79,142,247,.18);border-color:#4f8ef7;color:#7ab3f5}
+.sopt.a-c{background:var(--gbg);border-color:var(--green);color:var(--green)}
+.sopt.a-d{background:rgba(255,255,255,.08);border-color:var(--border2);color:var(--text2)}
+.sopt.a-x{background:var(--rbg);border-color:var(--red);color:var(--red)}
+.sopt.a-own{background:var(--gbg);border-color:var(--green);color:var(--green)}
+.sopt.a-agent{background:var(--abg);border-color:var(--amber);color:var(--amber)}
+.faction{display:flex;gap:10px}
+.bcancel{flex:1;padding:13px;border-radius:var(--r);border:.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:15px;cursor:pointer}
+.bcancel:active{background:var(--bg3)}
+.bsave{flex:2;padding:13px;border-radius:var(--r);border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.bsave:active{background:var(--accent2);transform:scale(.98)}
+.bdel{width:100%;padding:13px;border-radius:var(--r);border:.5px solid rgba(240,82,82,.3);background:var(--rbg);color:var(--red);font-size:15px;font-weight:600;cursor:pointer;text-align:center}
+.bcloseslot{width:100%;padding:13px;border-radius:var(--r);border:.5px solid rgba(245,168,74,.3);background:var(--abg);color:var(--amber);font-size:15px;font-weight:600;cursor:pointer;text-align:center}
+
+/* SETTINGS */
+.stitle{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:0 2px 6px}
+.pilot-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:.5px solid var(--border)}
+.pilot-row:last-child{border-bottom:none}
+.pilot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pilot-row input{background:none;border:none;color:var(--text);font-size:15px;outline:none;flex:1}
+.pilot-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:2px 6px}
+.add-pilot-btn{width:100%;padding:11px;border-radius:var(--r);border:.5px dashed var(--border2);background:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:2px}
+.add-pilot-btn:active{background:var(--bg2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg3);border:.5px solid var(--border2);border-radius:30px;padding:9px 20px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;z-index:999}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SYNC INDICATOR */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:6px;transition:background .3s}
+.sync-dot.syncing{background:var(--amber)}
+.sync-dot.err{background:var(--red)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="login-box">
+    <div class="login-icon">🪂</div>
+    <div class="login-title">Тандем</div>
+    <div class="login-sub">Гагра</div>
+    <div class="pdots">
+      <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
+      <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
+    </div>
+    <div class="perr" id="perr"></div>
+    <div class="numpad">
+      <button class="nk" onclick="kp('1')">1</button>
+      <button class="nk" onclick="kp('2')">2</button>
+      <button class="nk" onclick="kp('3')">3</button>
+      <button class="nk" onclick="kp('4')">4</button>
+      <button class="nk" onclick="kp('5')">5</button>
+      <button class="nk" onclick="kp('6')">6</button>
+      <button class="nk" onclick="kp('7')">7</button>
+      <button class="nk" onclick="kp('8')">8</button>
+      <button class="nk" onclick="kp('9')">9</button>
+      <button class="nk dim" onclick="kp('c')">Сброс</button>
+      <button class="nk" onclick="kp('0')">0</button>
+      <button class="nk dim" onclick="kp('d')">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="s-main" class="screen">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="topbar-title">🪂 Тандем</div>
+      <span class="sync-dot" id="sync-dot" title="Синхронизация"></span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="sbtn" onclick="goToday()">Сегодня</button>
+      <button class="ibtn" onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+  <div class="statsbar" id="statsbar"></div>
+  <div class="weeknav">
+    <button class="narr" onclick="cw(-1)">‹</button>
+    <div>
+      <div class="wlabel-main" id="wlmain"></div>
+      <div class="wlabel-sub" id="wlsub"></div>
+    </div>
+    <button class="narr" onclick="cw(1)">›</button>
+  </div>
+  <div class="tscroll">
+    <table class="wtable">
+      <thead><tr id="thead-row"><th class="th-r">Раунд</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="s-form" class="screen">
+  <div class="topbar">
+    <button class="ibtn" onclick="back()">← Назад</button>
+    <div class="topbar-title" id="ftitle">Запись</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="fscroll">
+    <div class="fhero">
+      <div class="fh-round" id="fh-round"></div>
+      <div class="fh-date" id="fh-date"></div>
+      <div class="fh-pilot" id="fh-pilot"></div>
+    </div>
+    <div class="fgrp">
+      <div class="fld">
+        <label>Имя клиента *</label>
+        <input id="fi-name" type="text" placeholder="Иван Иванов" autocomplete="off" autocorrect="off" autocapitalize="words">
+      </div>
+      <div class="fld">
+        <label>Телефон</label>
+        <input id="fi-phone" type="tel" placeholder="+7 900 000 00 00">
+      </div>
+      <div class="fld">
+        <label>Откуда забрать (трансфер)</label>
+        <input id="fi-pickup" type="text" placeholder="Центр, отель..." autocorrect="off">
+      </div>
+      <div class="fld">
+        <label>Вес (кг)</label>
+        <input id="fi-weight" type="number" placeholder="75" min="30" max="200">
+      </div>
+      <div class="fld">
+        <label>Источник клиента</label>
+        <div class="seg" id="src-seg">
+          <button class="sopt a-own" onclick="setSrc('own',this)">Свой</button>
+          <button class="sopt" onclick="setSrc('agent',this)">От агента</button>
+        </div>
+      </div>
+      <div class="fld" id="agent-fld" style="display:none">
+        <label>Имя агента</label>
+        <input id="fi-agent" type="text" placeholder="Агент Ахмед..." autocorrect="off">
+      </div>
+      <div class="fld">
+        <label>Примечание</label>
+        <textarea id="fi-note" placeholder="Необязательно..."></textarea>
+      </div>
+      <div class="fld">
+        <label>Статус</label>
+        <div class="seg" id="st-seg"></div>
+      </div>
+    </div>
+    <div class="faction">
+      <button class="bcancel" onclick="back()">Отмена</button>
+      <button class="bsave" onclick="saveForm()">Сохранить ✓</button>
+    </div>
+    <button class="bcloseslot" id="btn-close-slot" onclick="toggleCloseSlot()" style="display:none">Закрыть этот слот</button>
+    <button class="bdel" id="btn-del" onclick="delBooking()" style="display:none">Удалить запись</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="s-settings" class="screen">
+  <div class="topbar">
+    <button class="ibtn" onclick="back()">← Назад</button>
+    <div class="topbar-title">Настройки</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="fscroll">
+    <div class="stitle">Пилоты</div>
+    <div class="fgrp" id="pilots-list"></div>
+    <button class="add-pilot-btn" onclick="addPilot()">+ Добавить пилота</button>
+
+    <div class="stitle" style="margin-top:12px">Количество раундов в день</div>
+    <div class="fgrp">
+      <div class="fld">
+        <label>Раундов (1–8)</label>
+        <input id="si-rounds" type="number" min="1" max="8">
+      </div>
+    </div>
+
+    <div class="stitle" style="margin-top:12px">Смена пароля</div>
+    <div class="fgrp">
+      <div class="fld">
+        <label>Новый пароль (4 цифры)</label>
+        <input id="si-p1" type="password" placeholder="••••" maxlength="4" inputmode="numeric">
+      </div>
+      <div class="fld">
+        <label>Повторите</label>
+        <input id="si-p2" type="password" placeholder="••••" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="faction" style="margin-top:4px">
+      <button class="bcancel" onclick="back()">Отмена</button>
+      <button class="bsave" onclick="saveSettings()">Сохранить ✓</button>
+    </div>
+    <button class="bcancel" style="width:100%;margin-top:8px;color:var(--red);border-color:rgba(240,82,82,.3)" onclick="logout()">Выйти</button>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCbqqSX45tyYD5w1TKWVOr56wsSfxNxAJM",
+  authDomain: "paraplan-gagra.firebaseapp.com",
+  databaseURL: "https://paraplan-gagra-default-rtdb.firebaseio.com",
+  projectId: "paraplan-gagra",
+  storageBucket: "paraplan-gagra.firebasestorage.app",
+  messagingSenderId: "615801533597",
+  appId: "1:615801533597:web:c975c70df7b962fa6fd074",
+  measurementId: "G-JHDFMNN1LV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const PILOT_COLORS = ['#7ab3f5','#f5a84a','#3dd68c','#e879f9','#f87171','#34d399','#60a5fa','#fbbf24'];
+const DAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const MONTHSF = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const SL = {b:'Записан',c:'Подтверждён',d:'Выполнен',x:'Отменён'};
+
+let cfg = {pass:'1234', pilots:[{id:'p0',name:'Пилот 1'},{id:'p1',name:'Пилот 2'}], rounds:6};
+let bk = {}, closed = {};
+let pin = '', wo = 0, curKey = null, editing = false, curSrc = 'own', curSt = 'b';
+
+// SYNC
+function setSyncState(s){
+  const d = document.getElementById('sync-dot');
+  if(!d) return;
+  d.className = 'sync-dot' + (s==='ok'?'':s==='sync'?' syncing':' err');
+}
+
+// FIREBASE LISTENERS
+function startListeners(){
+  setSyncState('sync');
+  onValue(ref(db,'cfg'), snap => {
+    if(snap.val()) cfg = snap.val();
+    if(!cfg.pilots || !cfg.pilots.length) cfg.pilots = [{id:'p0',name:'Пилот 1'},{id:'p1',name:'Пилот 2'}];
+    if(!cfg.rounds) cfg.rounds = 6;
+    if(!cfg.pass) cfg.pass = '1234';
+    setSyncState('ok');
+    render();
+  }, e => setSyncState('err'));
+
+  onValue(ref(db,'bk'), snap => { bk = snap.val()||{}; render(); });
+  onValue(ref(db,'closed'), snap => { closed = snap.val()||{}; render(); });
+}
+
+async function writeCfg(){ setSyncState('sync'); await set(ref(db,'cfg'), cfg); setSyncState('ok'); }
+async function writeBk(key, val){ setSyncState('sync'); if(val===null) await remove(ref(db,'bk/'+key)); else await set(ref(db,'bk/'+key), val); setSyncState('ok'); }
+async function writeClosed(key, val){ setSyncState('sync'); if(val===null) await remove(ref(db,'closed/'+key)); else await set(ref(db,'closed/'+key), val); setSyncState('ok'); }
+
+// SCREENS
+function goTo(id){
+  document.querySelector('.screen.active')?.classList.replace('active','prev');
+  setTimeout(()=>document.querySelector('.screen.prev')?.classList.remove('prev'),300);
+  document.getElementById(id).classList.add('active');
+}
+window.back = ()=>{ goTo('s-main'); };
+window.logout = ()=>{ goTo('s-login'); pin=''; updDots(); };
+
+// TOAST
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2200); }
+
+// LOGIN
+window.kp = v => {
+  if(v==='c') pin=''; else if(v==='d') pin=pin.slice(0,-1); else if(pin.length<4) pin+=v;
+  updDots();
+  if(pin.length===4) checkPin();
+};
+function updDots(err){ for(let i=0;i<4;i++){ const d=document.getElementById('pd'+i); d.className='pd'+(i<pin.length?' on':'')+(err?' er':''); } }
+function checkPin(){
+  if(pin===cfg.pass){ goTo('s-main'); render(); }
+  else{ updDots(true); document.getElementById('perr').textContent='Неверный пароль'; pin=''; setTimeout(()=>{ updDots(); document.getElementById('perr').textContent=''; },700); }
+}
+
+// WEEK
+function weekStart(){ const n=new Date(),day=n.getDay(),diff=day===0?-6:1-day,m=new Date(n); m.setDate(n.getDate()+diff+wo*7); m.setHours(0,0,0,0); return m; }
+function dk(d){ return d.toISOString().slice(0,10); }
+function fmtFull(d){ return DAYS[d.getDay()]+', '+d.getDate()+' '+MONTHSF[d.getMonth()]; }
+function isToday(d){ return d.toDateString()===new Date().toDateString(); }
+window.cw = n=>{ wo+=n; render(); };
+window.goToday = ()=>{ wo=0; render(); };
+
+// STATS BAR
+function renderStats(){
+  const sb = document.getElementById('statsbar');
+  const counts = {};
+  cfg.pilots.forEach(p=>counts[p.id]=0);
+  Object.values(bk).forEach(day=>{
+    Object.values(day).forEach(slot=>{
+      Object.entries(slot).forEach(([pid,b])=>{
+        if(b && b.name && counts[pid]!==undefined && b.st!=='x') counts[pid]++;
+      });
+    });
+  });
+  sb.innerHTML = cfg.pilots.map((p,i)=>`
+    <div class="stat-item">
+      <div class="stat-name" style="color:${PILOT_COLORS[i%PILOT_COLORS.length]}">${p.name}</div>
+      <div class="stat-num" style="color:${PILOT_COLORS[i%PILOT_COLORS.length]}">${counts[p.id]||0}</div>
+    </div>`).join('');
+}
+
+// RENDER TABLE
+function render(){
+  renderStats();
+  const ws = weekStart(), we = new Date(ws); we.setDate(ws.getDate()+6);
+  document.getElementById('wlmain').textContent = ws.getDate()+' '+MONTHS[ws.getMonth()]+' — '+we.getDate()+' '+MONTHS[we.getMonth()];
+  document.getElementById('wlsub').textContent = wo===0?'Текущая неделя':wo<0?'Прошлые недели':'Будущие недели';
+
+  // Thead
+  const tr_head = document.getElementById('thead-row');
+  tr_head.innerHTML = '<th class="th-r">Раунд</th>';
+  cfg.pilots.forEach((p,i)=>{
+    const th = document.createElement('th');
+    th.textContent = p.name;
+    th.style.color = PILOT_COLORS[i%PILOT_COLORS.length];
+    tr_head.appendChild(th);
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  const rounds = cfg.rounds||6;
+
+  for(let d=0;d<7;d++){
+    const date = new Date(ws); date.setDate(ws.getDate()+d);
+    const today = isToday(date), dkey = dk(date);
+    const dayData = bk[dkey]||{};
+    const dayClosedData = closed[dkey]||{};
+
+    // Day header
+    const drow = document.createElement('tr');
+    const dtd = document.createElement('td');
+    dtd.colSpan = cfg.pilots.length+1; dtd.className='day-hdr-td';
+    const isDayClosed = dayClosedData['all'];
+    dtd.innerHTML=`<div class="day-hdr">
+      <span class="dh-name">${DAYS[date.getDay()]}</span>
+      <span class="dh-date">${date.getDate()} ${MONTHSF[date.getMonth()]}</span>
+      ${today?'<span class="dh-today">Сегодня</span>':''}
+      ${isDayClosed?`<span class="dh-closed" onclick="openDayClose('${dkey}')">Выходной</span>`:''}
+    </div>`;
+    drow.appendChild(dtd); tbody.appendChild(drow);
+
+    for(let r=1;r<=rounds;r++){
+      const tr = document.createElement('tr');
+      const rtd = document.createElement('td');
+      rtd.className='td-round'; rtd.innerHTML=`<div class="rl">Р${r}</div>`;
+      tr.appendChild(rtd);
+
+      cfg.pilots.forEach((p,pi)=>{
+        const td = document.createElement('td');
+        const slotKey = `${dkey}|${r}|${p.id}`;
+        const b = dayData[r] && dayData[r][p.id];
+        const isClosed = dayClosedData[r+'-'+p.id] || dayClosedData['all'];
+        const color = PILOT_COLORS[pi%PILOT_COLORS.length];
+
+        if(isClosed && !b){
+          td.innerHTML=`<div class="cell cell-closed" onclick="openForm('${slotKey}',false)"><span class="cell-closed-label">🔒</span></div>`;
+        } else if(!b){
+          td.innerHTML=`<div class="cell cell-empty" onclick="openForm('${slotKey}',false)"><span class="plus">＋</span></div>`;
+        } else {
+          const sc={b:'cb-b',c:'cb-c',d:'cb-d',x:'cb-x'}[b.st||'b'];
+          const srcc = b.src==='agent'?'src-agent':'src-own';
+          const srcl = b.src==='agent'?(b.agent?'🤝 '+b.agent:'🤝 Агент'):'👤 Свой';
+          td.innerHTML=`<div class="cell cell-filled" style="background:${color}18" onclick="openForm('${slotKey}',true)">
+            <div class="cn">${esc(b.name)}</div>
+            ${b.phone?`<div class="cph" style="color:${color}">${esc(b.phone)}</div>`:''}
+            ${b.pickup?`<div class="ctr">📍 ${esc(b.pickup)}</div>`:''}
+            <div class="crow">
+              <span class="cbadge ${sc}">${SL[b.st||'b']}</span>
+              <span class="csrc ${srcc}">${srcl}</span>
+            </div>
+          </div>`;
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+  }
+}
+
+// FORM
+window.openForm = (key, edit) => {
+  curKey=key; editing=edit;
+  const [dkey,round,pid] = key.split('|');
+  const dateObj = new Date(dkey+'T12:00:00');
+  const pilot = cfg.pilots.find(p=>p.id===pid)||{name:'?'};
+  const pi = cfg.pilots.findIndex(p=>p.id===pid);
+  const color = PILOT_COLORS[pi%PILOT_COLORS.length];
+
+  document.getElementById('ftitle').textContent = edit?'Редактировать':'Новая запись';
+  document.getElementById('fh-round').textContent = 'Раунд '+round;
+  document.getElementById('fh-date').textContent = fmtFull(dateObj);
+  document.getElementById('fh-pilot').innerHTML = `<span style="color:${color}">${pilot.name}</span>`;
+
+  const b = edit && bk[dkey] && bk[dkey][round] && bk[dkey][round][pid];
+  document.getElementById('fi-name').value = b?b.name:'';
+  document.getElementById('fi-phone').value = b?(b.phone||''):'';
+  document.getElementById('fi-pickup').value = b?(b.pickup||''):'';
+  document.getElementById('fi-weight').value = b?(b.weight||''):'';
+  document.getElementById('fi-note').value = b?(b.note||''):'';
+  document.getElementById('fi-agent').value = b?(b.agent||''):'';
+
+  curSrc = b?(b.src||'own'):'own';
+  curSt = b?(b.st||'b'):'b';
+  setSrc(curSrc, null);
+  document.getElementById('agent-fld').style.display = curSrc==='agent'?'':'none';
+
+  document.getElementById('st-seg').innerHTML = Object.entries(SL).map(([k,v])=>
+    `<button class="sopt ${curSt===k?'a-'+k:''}" onclick="setSt('${k}',this)">${v}</button>`).join('');
+
+  const isClosed = (closed[dkey]&&(closed[dkey][round+'-'+pid]||closed[dkey]['all']));
+  document.getElementById('btn-close-slot').style.display = !edit?'':'none';
+  document.getElementById('btn-close-slot').textContent = isClosed?'Открыть слот':'Закрыть слот (выходной)';
+  document.getElementById('btn-del').style.display = edit?'':'none';
+  goTo('s-form');
+  if(!edit) setTimeout(()=>document.getElementById('fi-name').focus(),350);
+};
+
+window.setSrc = (s, btn) => {
+  curSrc=s;
+  document.querySelectorAll('#src-seg .sopt').forEach(b=>b.className='sopt');
+  if(btn) btn.className='sopt a-'+s;
+  else { const ab=document.querySelector(`#src-seg .sopt`); document.querySelectorAll('#src-seg .sopt').forEach(b=>{ if((b.textContent.includes('агент')||b.textContent.includes('Агент'))&&s==='agent') b.className='sopt a-agent'; else if(!b.textContent.includes('агент')&&!b.textContent.includes('Агент')&&s==='own') b.className='sopt a-own'; }); }
+  document.getElementById('agent-fld').style.display = s==='agent'?'':'none';
+};
+window.setSt = (s,btn)=>{ curSt=s; document.querySelectorAll('#st-seg .sopt').forEach(b=>b.className='sopt'); btn.className='sopt a-'+s; };
+
+window.saveForm = async () => {
+  const name = document.getElementById('fi-name').value.trim();
+  if(!name){ toast('Введите имя клиента'); return; }
+  const [dkey,round,pid] = curKey.split('|');
+  const entry = {
+    name,
+    phone: document.getElementById('fi-phone').value.trim(),
+    pickup: document.getElementById('fi-pickup').value.trim(),
+    weight: document.getElementById('fi-weight').value||'',
+    note: document.getElementById('fi-note').value.trim(),
+    src: curSrc,
+    agent: curSrc==='agent'?document.getElementById('fi-agent').value.trim():'',
+    st: curSt
+  };
+  await writeBk(`${dkey}/${round}/${pid}`, entry);
+  toast(editing?'Изменения сохранены':'Запись создана ✓');
+  back();
+};
+
+window.delBooking = async () => {
+  if(!confirm('Удалить запись?')) return;
+  const [dkey,round,pid] = curKey.split('|');
+  await writeBk(`${dkey}/${round}/${pid}`, null);
+  toast('Запись удалена');
+  back();
+};
+
+window.toggleCloseSlot = async () => {
+  const [dkey,round,pid] = curKey.split('|');
+  const slotId = round+'-'+pid;
+  const isClosed = closed[dkey]&&closed[dkey][slotId];
+  await writeClosed(`${dkey}/${slotId}`, isClosed?null:true);
+  toast(isClosed?'Слот открыт':'Слот закрыт');
+  back();
+};
+
+window.openDayClose = async (dkey) => {
+  if(confirm('Снять отметку "Выходной" с этого дня?')) await writeClosed(`${dkey}/all`, null);
+};
+
+// SETTINGS
+window.openSettings = () => {
+  renderPilotsList();
+  document.getElementById('si-rounds').value = cfg.rounds||6;
+  document.getElementById('si-p1').value='';
+  document.getElementById('si-p2').value='';
+  goTo('s-settings');
+};
+
+function renderPilotsList(){
+  const pl = document.getElementById('pilots-list');
+  pl.innerHTML = cfg.pilots.map((p,i)=>`
+    <div class="pilot-row">
+      <div class="pilot-dot" style="background:${PILOT_COLORS[i%PILOT_COLORS.length]}"></div>
+      <input type="text" value="${esc(p.name)}" oninput="cfg.pilots[${i}].name=this.value" autocorrect="off">
+      ${cfg.pilots.length>1?`<button class="pilot-del" onclick="removePilot(${i})">✕</button>`:''}
+    </div>`).join('');
+}
+
+window.addPilot = () => {
+  cfg.pilots.push({id:'p'+Date.now(), name:'Пилот '+(cfg.pilots.length+1)});
+  renderPilotsList();
+};
+window.removePilot = i => { if(cfg.pilots.length>1){ cfg.pilots.splice(i,1); renderPilotsList(); } };
+
+window.saveSettings = async () => {
+  const rounds = parseInt(document.getElementById('si-rounds').value)||6;
+  const np = document.getElementById('si-p1').value.trim();
+  const np2 = document.getElementById('si-p2').value.trim();
+  const names = cfg.pilots.map(p=>p.name.trim()).filter(Boolean);
+  if(names.length===0){ toast('Добавьте хотя бы одного пилота'); return; }
+  if(rounds<1||rounds>8){ toast('Раундов от 1 до 8'); return; }
+  if(np){ if(!/^\d{4}$/.test(np)){ toast('Пароль — 4 цифры'); return; } if(np!==np2){ toast('Пароли не совпадают'); return; } cfg.pass=np; }
+  cfg.rounds=rounds;
+  cfg.pilots.forEach((p,i)=>{ if(names[i]) p.name=names[i]; });
+  await writeCfg();
+  toast('Настройки сохранены ✓');
+  back();
+};
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// INIT
+startListeners();
+</script>
+</body>
+</html>
